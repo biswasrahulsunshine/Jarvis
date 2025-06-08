@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jarvis</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 0;
+      background-color: #f0f2f5;
+      color: #222;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1 {
+      text-align: center;
+      background-color: #007bff;
+      color: white;
+      margin: 0; padding: 24px 20px;
+      font-weight: 700;
+      font-size: 2.1rem;
+      letter-spacing: 1.2px;
+      user-select: none;
+      box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      background: white;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 14px 0;
+      user-select: none;
+      font-weight: 600;
+    }
+    .tab {
+      padding: 12px 28px;
+      border-radius: 20px;
+      background-color: #e0e0e0;
+      cursor: pointer;
+      color: #555;
+      font-size: 1rem;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      position: relative;
+      box-shadow: inset 0 0 0 0 transparent;
+    }
+    .tab:hover {
+      background-color: #cde2ff;
+      color: #0056b3;
+    }
+    .tab.active {
+      background-color: #007bff;
+      color: white;
+      box-shadow: 0 6px 14px rgba(0,123,255,0.4);
+    }
+    #panels {
+      padding: 28px 24px 48px;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .subject-panel {
+      display: none;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .subject-panel.active {
+      display: grid;
+    }
+    .chapter-card {
+      border-radius: 18px;
+      padding: 22px 26px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 230px;
+      background-image: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+      cursor: default;
+      user-select: none;
+    }
+    .chapter-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.15);
+    }
+
+    /* Vibrant Base colors by accuracy */
+    .red {
+      background-color: #e03e3e; /* Vibrant Red */
+      color: #fff;
+      background-image: linear-gradient(135deg, #e03e3e 0%, #b93232 90%);
+    }
+    .yellow {
+      background-color: #f0ad4e; /* Vibrant Yellow/Orange */
+      color: #fff;
+      background-image: linear-gradient(135deg, #f0ad4e 0%, #d18f30 90%);
+    }
+    .green {
+      background-color: #28a745; /* Vibrant Green */
+      color: #fff;
+      background-image: linear-gradient(135deg, #28a745 0%, #1e7e34 90%);
+    }
+
+    /* Shades based on update time */
+    .recent-0 { filter: brightness(1.15); }  /* brightest */
+    .recent-1 { filter: brightness(0.85); }   /* medium */
+    .recent-2 { filter: brightness(0.65); }   /* darkest */
+
+    .chapter-header {
+      font-weight: 800;
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+      line-height: 1.2;
+    }
+    .chapter-sub {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-bottom: 6px;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.15);
+    }
+    .progress-bar {
+      height: 14px;
+      background-color: rgba(255,255,255,0.25);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 14px 0 18px;
+      box-shadow: inset 0 1px 3px rgba(255,255,255,0.4);
+    }
+    .progress-fill {
+      height: 100%;
+      transition: width 0.6s ease, background-color 0.4s ease;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .chapter-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+    }
+    .chapter-actions button {
+      flex: 1 1 48%;
+      padding: 11px 14px;
+      border: none;
+      border-radius: 12px;
+      background-color: rgba(255,255,255,0.2);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease, transform 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .chapter-actions button:hover {
+      background-color: rgba(255,255,255,0.35);
+      transform: translateY(-2px);
+    }
+    .chapter-actions button:active {
+      transform: translateY(0);
+    }
+    .chapter-actions button svg {
+      width: 18px;
+      height: 18px;
+      fill: white;
+      opacity: 0.85;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 720px) {
+      .subject-panel {
+        grid-template-columns: 1fr;
+        padding: 0 10px;
+      }
+      .chapter-card {
+        min-height: 200px;
+      }
+      .tabs {
+        gap: 8px;
+        padding: 12px 6px;
+      }
+      .tab {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Jarvis</h1>
+
+<div class="tabs" role="tablist" aria-label="Subjects">
+  <div class="tab active" role="tab" tabindex="0" aria-selected="true" data-subject="Botany">Botany</div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-subject="Zoology">Zoology</div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-subject="Physics">Physics</div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-subject="Chemistry">Chemistry</div>
+</div>
+
+<div id="panels">
+  <div class="subject-panel active" id="Botany" role="tabpanel"></div>
+  <div class="subject-panel" id="Zoology" role="tabpanel" hidden></div>
+  <div class="subject-panel" id="Physics" role="tabpanel" hidden></div>
+  <div class="subject-panel" id="Chemistry" role="tabpanel" hidden></div>
+</div>
+
+<script>
+const chapters = {
+  Botany: ["The Living World", "Biological Classification", "Plant Kingdom", "Morphology of Flowering Plants", "Anatomy of Flowering Plants", "Cell – The Unit of Life", "Biomolecules", "Cell Cycle & Cell Division", "Photosynthesis in Higher Plants", "Respiration in Plants", "Plant Growth & Development", "Sexual Reproduction in Flowering Plants", "Principles of Inheritance & Variation", "Molecular Basis of Inheritance", "Organisms & Populations", "Ecosystem", "Biodiversity & Conservation"],
+  Zoology: ["Animal Kingdom", "Structural Organisation in Animals", "Biomolecules", "Breathing & Exchange of Gases", "Body Fluids & Circulation", "Excretory Products & Elimination", "Locomotion & Movement", "Neural Control & Coordination", "Chemical Coordination & Integration", "Reproductive Health & Human Reproduction", "Evolution", "Human Health & Disease", "Microbes in Human Welfare", "Biotechnology Principles", "Biotechnology Applications"],
+  Physics: ["Physics & Measurement", "Kinematics 1D", "Kinematics 2D", "Laws of Motion", "Work, Energy & Power", "Rotational Motion", "Gravitation", "COM and Collisions", "Properties of Solids", "Properties of Liquids", "Thermodynamics", "Kinetic Theory of Gases", "Oscillation", "Waves", "Electrostatics 1", "Electrostatics 2", "Current Electricity", "Magnetic Effects of Current", "Magnetism", "EMI", "AC Current", "Electromagnetic Waves", "Ray Optics", "Wave Optics", "Dual Nature of Matter & Radiation", "Atoms & Nuclei", "Semiconductors"],
+  Chemistry: ["Some Basic Concepts of Chemistry", "Structure of Atom", "Classification of Elements and Periodicity", "Chemical Bonding and Molecular Structure", "Thermodynamics", "Chemical Equilibrium", "Ionic Equilibrium", "Redox Reactions", "The p-Block Element", "The d- & f-Block Elements", "Coordination Compounds", "Haloalkanes and Haloarenes", "Alcohols, Phenols and Ethers", "Aldehydes, Ketones and Carboxylic Acids", "Organic Compounds Containing Nitrogen", "Biomolecules", "General Principles and Processes of Isolation of Elements", "GOC"]
+};
+
+function getClassByAccuracy(accuracy) {
+  if (accuracy >= 85) return 'green';
+  if (accuracy >= 50) return 'yellow';
+  return 'red';
+}
+
+function getRecentClass(timestamp) {
+  if (!timestamp || isNaN(timestamp)) return 'recent-2';
+  const daysAgo = Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
+  if (daysAgo <= 2) return 'recent-0';
+  if (daysAgo <= 10) return 'recent-1';
+  return 'recent-2';
+}
+
+function getLastUpdatedText(timestamp) {
+  if (!timestamp || isNaN(timestamp)) return "Last updated: never";
+  const daysAgo = Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
+  return `Last updated: ${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`;
+}
+
+function renderChapters(subject) {
+  const container = document.getElementById(subject);
+  container.innerHTML = '';
+
+  const sorted = chapters[subject].slice().sort((a, b) => {
+    const aData = JSON.parse(localStorage.getItem(`${subject}_${a}`)) || { attempts: 0, correct: 0 };
+    const bData = JSON.parse(localStorage.getItem(`${subject}_${b}`)) || { attempts: 0, correct: 0 };
+    const aAcc = aData.attempts ? aData.correct / aData.attempts : 0;
+    const bAcc = bData.attempts ? bData.correct / bData.attempts : 0;
+    return aAcc - bAcc;
+  });
+
+  sorted.forEach(title => {
+    const key = `${subject}_${title}`;
+    const data = JSON.parse(localStorage.getItem(key)) || { attempts: 0, correct: 0, updated: null };
+    const accuracy = data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0;
+    const updatedTime = data.updated;
+    const lastUpdated = getLastUpdatedText(updatedTime);
+    const timeClass = getRecentClass(updatedTime);
+    const accuracyClass = getClassByAccuracy(accuracy);
+
+    const card = document.createElement("div");
+    card.className = `chapter-card ${accuracyClass} ${timeClass}`;
+    card.innerHTML = `
+      <div class="chapter-header">${title}</div>
+      <div class="chapter-sub">${subject}</div>
+      <div class="chapter-sub">Attempts: ${data.attempts} | Correct: ${data.correct}</div>
+      <div class="chapter-sub">Accuracy: ${accuracy}%</div>
+      <div class="chapter-sub">${lastUpdated}</div>
+      <div class="progress-bar" aria-label="Accuracy progress bar">
+        <div class="progress-fill" style="width: ${accuracy}%; background-color: ${accuracyClass === 'green' ? '#28a745' : accuracyClass === 'yellow' ? '#f0ad4e' : '#e03e3e'};"></div>
+      </div>
+      <div class="chapter-actions">
+        <button onclick="updateAttempts('${key}')" aria-label="Update attempts for ${title}">
+          <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 1v18M1 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Attempts
+        </button>
+        <button onclick="updateCorrect('${key}')" aria-label="Update correct answers for ${title}">
+          <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M6 10l3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Correct
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function updateAttempts(key) {
+  const attempts = parseInt(prompt("Enter total number of MCQs attempted:"), 10);
+  if (!isNaN(attempts) && attempts >= 0) {
+    const data = JSON.parse(localStorage.getItem(key)) || { attempts: 0, correct: 0, updated: null };
+    data.attempts = attempts;
+    data.updated = Date.now();
+    localStorage.setItem(key, JSON.stringify(data));
+    loadAll();
+  } else {
+    alert("Please enter a valid number.");
+  }
+}
+
+function updateCorrect(key) {
+  const correct = parseInt(prompt("Enter number of correct answers:"), 10);
+  if (!isNaN(correct) && correct >= 0) {
+    const data = JSON.parse(localStorage.getItem(key)) || { attempts: 0, correct: 0, updated: null };
+    data.correct = correct;
+    data.updated = Date.now();
+    localStorage.setItem(key, JSON.stringify(data));
+    loadAll();
+  } else {
+    alert("Please enter a valid number.");
+  }
+}
+
+function loadAll() {
+  Object.keys(chapters).forEach(subject => renderChapters(subject));
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+      t.setAttribute('tabindex', '-1');
+    });
+    document.querySelectorAll('.subject-panel').forEach(p => {
+      p.classList.remove('active');
+      p.setAttribute('hidden', '');
+    });
+
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+    tab.setAttribute('tabindex', '0');
+    const subject = tab.dataset.subject;
+    const panel = document.getElementById(subject);
+    panel.classList.add('active');
+    panel.removeAttribute('hidden');
+  });
+});
+
+loadAll();
+</script>
+
+</body>
+</html>
